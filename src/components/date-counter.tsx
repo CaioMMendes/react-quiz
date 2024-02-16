@@ -4,43 +4,36 @@ import Button from "./button";
 import Input from "./input";
 
 function DateCounter() {
-  //   const [count, setCount] = useState(0);
-  const [count, dispatch] = useReducer(reducer, 0);
-  const [step, setStep] = useState(1);
-
+  const [{ count, step }, dispatch] = useReducer(reducer, {
+    count: 0,
+    step: 1,
+  });
   // This mutates the date object.
   const date = new Date();
-  date.setDate(date.getDate() + count);
+  date.setDate(date.getDate() + count * step);
 
   const dec = function () {
     dispatch({ type: "decrease" });
-    // setCount((count) => count - 1);
-    // setCount((count) => count - step);
   };
 
   const inc = function () {
     dispatch({ type: "increase" });
-    // setCount((count) => count + 1);
-    // setCount((count) => count + step);
   };
 
   const defineCount = function (e: ChangeEvent<HTMLInputElement>) {
     dispatch({ type: "set", payload: Number(e.target.value) });
-    // setCount(Number(e.target.value));
   };
 
   const defineStep = function (e: ChangeEvent<HTMLInputElement>) {
-    setStep(Number(e.target.value));
+    dispatch({ type: "setStep", payload: Number(e.target.value) });
   };
 
   const reset = function () {
-    // setCount(0);
-    dispatch({ type: "set", payload: 0 });
-    setStep(1);
+    dispatch({ type: "reset" });
   };
 
   return (
-    <div className="w-full flex flex-col gap-2 justify-center">
+    <div className="w-full flex flex-col gap-2 justify-center items-center">
       <div className="flex justify-center items-center gap-2">
         <Input
           type="range"
@@ -81,12 +74,29 @@ export default DateCounter;
 type ActionType =
   | { type: "increase" }
   | { type: "decrease" }
+  | { type: "reset" }
+  | { type: "setStep"; payload: number }
   | { type: "set"; payload: number };
 
-function reducer(state: number, action: ActionType) {
-  if (action.type === "increase") return state + 1;
-  if (action.type === "decrease") return state - 1;
-  if (action.type === "set") return action.payload;
+function reducer(state: { count: number; step: number }, action: ActionType) {
+  // if (action.type === "increase") return state + 1;
+  // if (action.type === "decrease") return state - 1;
+  // if (action.type === "set") return action.payload;
 
-  return state;
+  switch (action.type) {
+    case "increase":
+      return { ...state, count: state.count + 1 };
+    case "decrease":
+      return { ...state, count: state.count - 1 };
+    case "set":
+      return { ...state, count: action.payload };
+
+    case "setStep":
+      return { ...state, step: action.payload };
+    case "reset":
+      return { count: 0, step: 1 };
+
+    default:
+      throw new Error("Unknown action");
+  }
 }
