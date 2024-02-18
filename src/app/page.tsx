@@ -1,5 +1,9 @@
 "use client";
-import { useEffect, useReducer } from "react";
+import { Suspense, useEffect, useReducer } from "react";
+import Loading from "./loading";
+import Error from "./error";
+import ErrorComponent from "@/components/error-component";
+import Button from "@/components/button";
 
 interface QuestionTypes {
   correctOption: number;
@@ -36,7 +40,7 @@ function reducer(state: StateType, action: ActionType): StateType {
         status: "error",
       };
     default:
-      throw new Error("Action Unknown");
+      return { ...state };
   }
 }
 
@@ -60,11 +64,20 @@ export default function Home() {
       console.log(error);
     }
   }
+
+  if (status === "loading") {
+    return <Loading />;
+  }
+
+  if (status === "error") return <ErrorComponent />;
+
   return (
-    <div className="flex flex-col gap-2 p-5">
-      {questions.map((question: QuestionTypes) => {
-        return <p key={question.question}>{question.question}</p>;
-      })}
+    <div className="flex flex-col gap-5 p-5 flex-1 items-center justify-center">
+      <h2 className="font-semibold text-2xl">Bem vindo ao React Quiz!</h2>
+      <h3 className="text-xl font-medium">
+        {questions.length} questões para testar suas habilidades em react
+      </h3>
+      <Button variant="button">Começar</Button>
     </div>
   );
 }
