@@ -4,10 +4,13 @@ import Loading from "./loading";
 import Error from "./error";
 import ErrorComponent from "@/components/error-component";
 import Button from "@/components/button";
+import StartQuiz from "@/components/start-quiz";
+import Question from "@/components/question";
+import fetchData from "@/fetch/fetch-data";
 
-interface QuestionTypes {
+export interface QuestionTypes {
+  options: string[];
   correctOption: number;
-  options: Partial<{ numberProp: number; stringProp: string }>;
   points: number;
   question: string;
 }
@@ -15,15 +18,18 @@ interface QuestionTypes {
 interface StateType {
   questions: QuestionTypes[];
   status: "loading" | "error" | "ready" | "active" | "finished";
+  index: number;
 }
 
-type ActionType =
+export type ActionType =
   | { type: "dataReceived"; payload: QuestionTypes[] }
-  | { type: "dataFailed" };
+  | { type: "dataFailed" }
+  | { type: "startQuiz" };
 
 const initialState: StateType = {
   questions: [],
   status: "loading",
+  index: 0,
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -39,29 +45,35 @@ function reducer(state: StateType, action: ActionType): StateType {
         ...state,
         status: "error",
       };
+    case "startQuiz":
+      return {
+        ...state,
+        status: "active",
+      };
     default:
       return { ...state };
   }
 }
 
 export default function Home() {
-  const [{ status, questions }, dispatch] = useReducer(reducer, initialState);
+  const [{ status, questions, index }, dispatch] = useReducer(
+    reducer,
+    initialState
+  );
+  const numberOfQuestions = questions.length;
 
   useEffect(() => {
-    fetchData();
+    handleFetchData();
   }, []);
 
-  async function fetchData() {
-    try {
-      const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL!}/questions`);
-      const result = await data.json();
-      console.log(result);
-      dispatch({ type: "dataReceived", payload: result });
-      return result;
-    } catch (error) {
+  async function handleFetchData() {
+    const data = await fetchData();
+
+    if (data) {
+      dispatch(data);
+    }
+    if (data.type === "dataFailed") {
       alert("ocorreu um erro na requisição");
-      dispatch({ type: "dataFailed" });
-      console.log(error);
     }
   }
 
@@ -72,12 +84,11 @@ export default function Home() {
   if (status === "error") return <ErrorComponent />;
 
   return (
-    <div className="flex flex-col gap-5 p-5 flex-1 items-center justify-center">
-      <h2 className="font-semibold text-2xl">Bem vindo ao React Quiz!</h2>
-      <h3 className="text-xl font-medium">
-        {questions.length} questões para testar suas habilidades em react
-      </h3>
-      <Button variant="button">Começar</Button>
-    </div>
+    <>
+      {status === "ready" && (
+        <StartQuiz numberOfQuestions={numberOfQuestions} dispatch={dispatch} />
+      )}
+      {status === "active" && <Question question={questions[index]} />}
+    </>
   );
 }
