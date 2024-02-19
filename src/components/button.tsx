@@ -12,7 +12,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type="submit"
         className={twMerge(
           variant === "button" &&
-            "flex   cursor-pointer items-center justify-center rounded-lg bg-primary-2/80 px-3 py-1.5 font-medium transition duration-300 hover:bg-primary-2/50 ",
+            "flex   items-center justify-center rounded-lg bg-primary-2/80 px-3 py-1.5 font-medium transition duration-300  ",
           className
         )}
         ref={ref}
