@@ -48,7 +48,7 @@ const Question = ({ question, dispatch, answer }: QuestionProps) => {
               <Button
                 variant="button"
                 disabled={answer !== null && true}
-                className={`w-full truncate text-nowrap  ${
+                className={`w-full truncate text-nowrap bg-primary-1 ${
                   answer !== null
                     ? ` pointer-events-none 
                     ${
@@ -56,7 +56,7 @@ const Question = ({ question, dispatch, answer }: QuestionProps) => {
                         ? "bg-green-700"
                         : "bg-red-800"
                     }`
-                    : "hover:bg-primary-2/50"
+                    : "hover:bg-primary-1/50"
                 }`}
                 onClick={() => handleSelectAnswer(index)}
               >

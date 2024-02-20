@@ -22,7 +22,7 @@ export default function RootLayout({
         className={`${inter.className} flex h-full !min-h-screen  flex-col justify-center`}
       >
         <Header />
-        <main className="flex-1 flex flex-col max-w-screen-2xl mx-auto w-full">
+        <main className="flex-1 flex flex-col max-w-screen-2xl mx-auto w-full justify-center items-center">
           {children}
         </main>
         <Footer />

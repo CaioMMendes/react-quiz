@@ -5,6 +5,9 @@ import StartQuiz from "@/components/start-quiz";
 import fetchData from "@/fetch/fetch-data";
 import { useEffect, useReducer } from "react";
 import Loading from "./loading";
+import Button from "@/components/button";
+import Progress from "@/components/progress";
+import questionPoints from "@/utils/question-points";
 
 export interface QuestionTypes {
   options: string[];
@@ -25,6 +28,7 @@ export type ActionType =
   | { type: "dataReceived"; payload: QuestionTypes[] }
   | { type: "dataFailed" }
   | { type: "startQuiz" }
+  | { type: "nextQuestion" }
   | { type: "newAnswer"; payload: number };
 
 const initialState: StateType = {
@@ -53,6 +57,12 @@ function reducer(state: StateType, action: ActionType): StateType {
         ...state,
         status: "active",
       };
+    case "nextQuestion":
+      return {
+        ...state,
+        index: state.index + 1,
+        answer: null,
+      };
     case "newAnswer":
       const question = state.questions.at(state.index);
 
@@ -70,15 +80,20 @@ function reducer(state: StateType, action: ActionType): StateType {
 }
 
 export default function Home() {
-  const [{ status, questions, index, answer }, dispatch] = useReducer(
+  const [{ status, questions, index, answer, points }, dispatch] = useReducer(
     reducer,
     initialState
   );
   const numberOfQuestions = questions.length;
+  const { totalPoints } = questionPoints(questions);
 
   useEffect(() => {
     handleFetchData();
   }, []);
+
+  const handleNextQuestionClick = () => {
+    dispatch({ type: "nextQuestion" });
+  };
 
   async function handleFetchData() {
     const data = await fetchData();
@@ -103,11 +118,31 @@ export default function Home() {
         <StartQuiz numberOfQuestions={numberOfQuestions} dispatch={dispatch} />
       )}
       {status === "active" && (
-        <Question
-          question={questions[index]}
-          dispatch={dispatch}
-          answer={answer}
-        />
+        <div className="flex flex-col gap-5 p-5 justify-center items-end w-fit bg-primary-2 rounded-lg overflow-hidden">
+          <Progress
+            numberOfQuestions={numberOfQuestions}
+            index={index}
+            points={points}
+            totalPoints={totalPoints}
+            answer={answer}
+          />
+          <Question
+            question={questions[index]}
+            dispatch={dispatch}
+            answer={answer}
+          />
+
+          <Button
+            variant="button"
+            disabled={answer === null}
+            className={`hover:bg-primary-1/50 bg-primary-1 ${
+              answer === null && "opacity-0"
+            } `}
+            onClick={handleNextQuestionClick}
+          >
+            Next
+          </Button>
+        </div>
       )}
     </>
   );
