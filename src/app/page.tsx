@@ -9,6 +9,7 @@ import Button from "@/components/button";
 import Progress from "@/components/progress";
 import questionPoints from "@/utils/question-points";
 import FinishScreen from "@/components/finish-screen";
+import Timer from "@/components/timer";
 
 export interface QuestionTypes {
   options: string[];
@@ -24,6 +25,7 @@ interface StateType {
   answer: number | null;
   points: number;
   highscore: number;
+  secondsRemaining: number;
 }
 
 export type ActionType =
@@ -32,8 +34,11 @@ export type ActionType =
   | { type: "startQuiz" }
   | { type: "nextQuestion" }
   | { type: "finish" }
+  | { type: "tick" }
   | { type: "restart" }
   | { type: "newAnswer"; payload: number };
+
+const SECONDS_PER_QUESTION = 30;
 
 const initialState: StateType = {
   questions: [],
@@ -42,6 +47,7 @@ const initialState: StateType = {
   answer: null,
   points: 0,
   highscore: 0,
+  secondsRemaining: 0,
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -60,6 +66,7 @@ function reducer(state: StateType, action: ActionType): StateType {
     case "startQuiz":
       return {
         ...state,
+        secondsRemaining: state.questions.length * SECONDS_PER_QUESTION,
         status: "active",
       };
     case "finish":
@@ -74,6 +81,15 @@ function reducer(state: StateType, action: ActionType): StateType {
         ...state,
         index: state.index + 1,
         answer: null,
+      };
+    case "tick":
+      if (state.secondsRemaining <= 0) {
+        alert("Your time is over!");
+        return { ...state, secondsRemaining: 500, status: "finished" };
+      }
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
       };
     case "restart":
       return {
@@ -100,8 +116,10 @@ function reducer(state: StateType, action: ActionType): StateType {
 }
 
 export default function Home() {
-  const [{ status, questions, index, answer, points, highscore }, dispatch] =
-    useReducer(reducer, initialState);
+  const [
+    { status, questions, index, answer, points, highscore, secondsRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
   const numberOfQuestions = questions.length;
   const { totalPoints } = questionPoints(questions);
 
@@ -151,17 +169,19 @@ export default function Home() {
             dispatch={dispatch}
             answer={answer}
           />
-
-          <Button
-            variant="button"
-            disabled={answer === null}
-            className={`hover:bg-primary-1/50 bg-primary-1 px-5 ${
-              answer === null && "opacity-0"
-            } `}
-            onClick={handleNextQuestionClick}
-          >
-            {index < numberOfQuestions - 1 ? "Next" : "Finish"}
-          </Button>
+          <div className="flex w-full items-center justify-between">
+            <Timer secondsRemaining={secondsRemaining} dispatch={dispatch} />
+            <Button
+              variant="button"
+              disabled={answer === null}
+              className={`hover:bg-primary-1/50 bg-primary-1 px-5 ${
+                answer === null && "opacity-0"
+              } `}
+              onClick={handleNextQuestionClick}
+            >
+              {index < numberOfQuestions - 1 ? "Next" : "Finish"}
+            </Button>
+          </div>
         </div>
       )}
       {status === "finished" && (
