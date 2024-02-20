@@ -8,6 +8,7 @@ import Loading from "./loading";
 import Button from "@/components/button";
 import Progress from "@/components/progress";
 import questionPoints from "@/utils/question-points";
+import FinishScreen from "@/components/finish-screen";
 
 export interface QuestionTypes {
   options: string[];
@@ -22,6 +23,7 @@ interface StateType {
   index: number;
   answer: number | null;
   points: number;
+  highscore: number;
 }
 
 export type ActionType =
@@ -29,6 +31,8 @@ export type ActionType =
   | { type: "dataFailed" }
   | { type: "startQuiz" }
   | { type: "nextQuestion" }
+  | { type: "finish" }
+  | { type: "restart" }
   | { type: "newAnswer"; payload: number };
 
 const initialState: StateType = {
@@ -37,6 +41,7 @@ const initialState: StateType = {
   index: 0,
   answer: null,
   points: 0,
+  highscore: 0,
 };
 
 function reducer(state: StateType, action: ActionType): StateType {
@@ -57,11 +62,26 @@ function reducer(state: StateType, action: ActionType): StateType {
         ...state,
         status: "active",
       };
+    case "finish":
+      return {
+        ...state,
+        status: "finished",
+        highscore:
+          state.points > state.highscore ? state.points : state.highscore,
+      };
     case "nextQuestion":
       return {
         ...state,
         index: state.index + 1,
         answer: null,
+      };
+    case "restart":
+      return {
+        ...state,
+        index: 0,
+        answer: null,
+        points: 0,
+        status: "ready",
       };
     case "newAnswer":
       const question = state.questions.at(state.index);
@@ -80,10 +100,8 @@ function reducer(state: StateType, action: ActionType): StateType {
 }
 
 export default function Home() {
-  const [{ status, questions, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [{ status, questions, index, answer, points, highscore }, dispatch] =
+    useReducer(reducer, initialState);
   const numberOfQuestions = questions.length;
   const { totalPoints } = questionPoints(questions);
 
@@ -92,7 +110,9 @@ export default function Home() {
   }, []);
 
   const handleNextQuestionClick = () => {
-    dispatch({ type: "nextQuestion" });
+    index < numberOfQuestions - 1
+      ? dispatch({ type: "nextQuestion" })
+      : dispatch({ type: "finish" });
   };
 
   async function handleFetchData() {
@@ -135,14 +155,22 @@ export default function Home() {
           <Button
             variant="button"
             disabled={answer === null}
-            className={`hover:bg-primary-1/50 bg-primary-1 ${
+            className={`hover:bg-primary-1/50 bg-primary-1 px-5 ${
               answer === null && "opacity-0"
             } `}
             onClick={handleNextQuestionClick}
           >
-            Next
+            {index < numberOfQuestions - 1 ? "Next" : "Finish"}
           </Button>
         </div>
+      )}
+      {status === "finished" && (
+        <FinishScreen
+          totalPoints={totalPoints}
+          points={points}
+          highscore={highscore}
+          dispatch={dispatch}
+        />
       )}
     </>
   );
